@@ -12,6 +12,12 @@ public class Control : MonoBehaviour
     float counter;
     bool timerEnabled;
 
+    public string urlImg86kB = "https://simulapfileserver.blob.core.windows.net/opuslist/heic2017a.jpg";
+    public string urlImg1MB = "https://simulapfileserver.blob.core.windows.net/opuslist/heic1917a.tif";
+    public string urlImg12MB = "https://simulapfileserver.blob.core.windows.net/opuslist/opo0501a.jpg";
+    public string urlImg36MB = "https://simulapfileserver.blob.core.windows.net/opuslist/heic1501a.jpg";
+    
+
     // Cached references
     public Text tenthsText;
     public Text secondsText;
@@ -28,19 +34,20 @@ public class Control : MonoBehaviour
 
     public void LoadImageBlocking()
     {
-        using (httpClient = new UnityWebRequest("https://spdvisa.blob.core.windows.net/opuslist/P7240349.JPG"))
+        using (httpClient = new UnityWebRequest(urlImg86kB))
         {
             Debug.Log("Getting image...");
             httpClient.downloadHandler = new DownloadHandlerBuffer();
-            httpClient.SendWebRequest(); // blocking call?
-            while (httpClient.downloadProgress < 1.0f)
+            httpClient.SendWebRequest(); // blocking call
+
+            while (!httpClient.isDone)
             {
-                Thread.Sleep(10);
-                Debug.Log(httpClient.downloadProgress * 100 + "% (Bytes downloaded: " + httpClient.downloadedBytes/1024 + " KB");
+                Thread.Sleep(1000);
             }
-            //Thread.Sleep(1000);
+            
             Debug.Log("hpptClient.isDone = " + httpClient.isDone);
-            if (httpClient.isNetworkError || httpClient.isHttpError)
+            
+            if (httpClient.result == UnityWebRequest.Result.ConnectionError || httpClient.result == UnityWebRequest.Result.ProtocolError)
             {
                 Debug.Log(httpClient.error);
             }
@@ -62,7 +69,7 @@ public class Control : MonoBehaviour
 
     public IEnumerator LoadImageNonBlocking()
     {
-        using (httpClient = new UnityWebRequest("https://spdvisa.blob.core.windows.net/opuslist/P7240349.JPG"))
+        using (httpClient = new UnityWebRequest(urlImg12MB))
         {
             Debug.Log("Getting image...");
             
@@ -72,14 +79,14 @@ public class Control : MonoBehaviour
             waitLoadSpinner.SetActive(true);
             yield return new WaitForSeconds(3); // Unneeded wait just to see spinner spin during 3 seconds
 
-            yield return httpClient.SendWebRequest(); // blocking call?
+            yield return httpClient.SendWebRequest(); // blocking call
             Debug.Log("hpptClient.isDone = " + httpClient.isDone);
 
             loadImageProgressEnabled = false;
             waitLoadSpinner.SetActive(false);
             loadImageProgressSlider.value = 1.0f;
 
-            if (httpClient.isNetworkError || httpClient.isHttpError)
+            if (httpClient.result == UnityWebRequest.Result.ConnectionError || httpClient.result == UnityWebRequest.Result.ProtocolError)
             {
                 Debug.Log(httpClient.error);
             }
@@ -105,7 +112,6 @@ public class Control : MonoBehaviour
     {
         if (timerEnabled)
         {
-            //Debug.Log(counter);
             counter += Time.deltaTime;
             if (counter > 0.1f)
             {
@@ -127,16 +133,14 @@ public class Control : MonoBehaviour
             }
         }
 
-        if (loadImageProgressEnabled)
-        {
-            if (httpClient.downloadProgress < 1.0f)
-            {
-                //Thread.Sleep(10);
-                Debug.Log(httpClient.downloadProgress * 100 + "% (Bytes downloaded: " + httpClient.downloadedBytes / 1024 + " KB");
-                loadImageProgressSlider.value = httpClient.downloadProgress;
-            }
-            //Thread.Sleep(1000);
-        }
+        // if (loadImageProgressEnabled)
+        // {
+        //     if (httpClient.downloadProgress < 1.0f)
+        //     {
+        //         Debug.Log(httpClient.downloadProgress * 100 + "% (Bytes downloaded: " + httpClient.downloadedBytes / 1024 + " KB");
+        //         loadImageProgressSlider.value = httpClient.downloadProgress;
+        //     }
+        // }
 
     }
 
